@@ -11,5 +11,17 @@ class RegisterForm extends AsyncForm {
    * */
   onSubmit(data) {
 
+    function regCallback (err, response) {
+      if (response && response.success === true) {
+        const registerWindow = App.getModal("register");
+        let formSpaces = Array.from(registerWindow.element.querySelectorAll(".form-control"));
+        formSpaces.forEach (element => element.value = "");
+        registerWindow.close();
+        App.setState("user-logged");
+      }
+    }
+
+    User.register(data, regCallback);
+
   }
 }
