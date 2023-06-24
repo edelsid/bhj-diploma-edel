@@ -14,7 +14,12 @@ class AccountsWidget {
    * необходимо выкинуть ошибку.
    * */
   constructor( element ) {
-
+    if (element === null) {
+      throw new Error ("В конструктор передан пустой элемент");
+    }
+    this.element = element;
+    this.registerEvents();
+    this.update();
   }
 
   /**
@@ -25,7 +30,15 @@ class AccountsWidget {
    * вызывает AccountsWidget.onSelectAccount()
    * */
   registerEvents() {
-
+    const accBtn = document.querySelector(".create-account");
+    accBtn.addEventListener("click", () =>{
+      const accWindow = App.getModal("createAccount");
+      accWindow.open();
+    })
+    const accList = Array.from(document.querySelectorAll(".account"));
+    accList.forEach (element => element.addEventListener("click", () => {
+      this.onSelectAccount(element);
+    }))
   }
 
   /**
@@ -40,7 +53,20 @@ class AccountsWidget {
    * */
   update() {
 
+    function updCallback (err, response) {
+      if (response && response.success === true) {
+        const accList = response.data;
+        this.clear();        
+        accList.forEach (element => this.renderItem(element));
+        this.registerEvents();
+        return false;
+      }
+    }
+    if (User.current() != null) {
+      const data = User.current();       
+      Account.list(data, updCallback.bind(this));      
   }
+}
 
   /**
    * Очищает список ранее отображённых счетов.
@@ -48,7 +74,8 @@ class AccountsWidget {
    * в боковой колонке
    * */
   clear() {
-
+    const deleteList = Array.from(document.querySelectorAll(".account"));
+    deleteList.forEach (element => element.parentNode.removeChild(element));
   }
 
   /**
@@ -58,8 +85,9 @@ class AccountsWidget {
    * счёта класс .active.
    * Вызывает App.showPage( 'transactions', { account_id: id_счёта });
    * */
-  onSelectAccount( element ) {
-
+  onSelectAccount(element) {
+    element.classList.toggle("active");
+    App.showPage('transactions', {account_id: element.dataset.id})
   }
 
   /**
@@ -68,7 +96,14 @@ class AccountsWidget {
    * item - объект с данными о счёте
    * */
   getAccountHTML(item){
-
+    const output = `
+    <li class="active account" data-id="`+item.id+`">
+      <a href="#">
+        <span>`+item.name+`</span> / 
+        <span>`+item.sum+`</span>
+      </a>
+    </li>`;
+    return output;
   }
 
   /**
@@ -78,6 +113,8 @@ class AccountsWidget {
    * и добавляет его внутрь элемента виджета
    * */
   renderItem(data){
-
+    const accPanel = document.querySelector(".accounts-panel");
+    const newAcc = this.getAccountHTML(data);
+    accPanel.insertAdjacentHTML("beforeend", newAcc);
   }
 }

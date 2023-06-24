@@ -11,14 +11,18 @@ class TransactionsPage {
    * через registerEvents()
    * */
   constructor( element ) {
-
+    if (element === null) {
+      throw new Error ("В конструктор передан пустой элемент");
+    }
+    this.element = element;
+    this.registerEvents();
   }
 
   /**
    * Вызывает метод render для отрисовки страницы
    * */
   update() {
-
+    this.render();
   }
 
   /**
@@ -28,7 +32,19 @@ class TransactionsPage {
    * TransactionsPage.removeAccount соответственно
    * */
   registerEvents() {
-
+    const accButton = document.querySelector(".remove-account");
+    const tranButton = document.querySelector(".transaction__remove");
+    accButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      this.removeAccount();
+    })
+    if (tranButton != null) {
+      tranButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        this.removeTransaction(id);
+      })
+    }
+    
   }
 
   /**
@@ -41,7 +57,19 @@ class TransactionsPage {
    * для обновления приложения
    * */
   removeAccount() {
-
+    if (this.lastOptions != null) {
+      let ask = confirm("Вы действительно хотите удалить счёт?");
+      if (ask) {
+        let data;
+        function removeCallback (err, response) {
+          if (response && response.success === true) {
+            App.updateWidgets();
+            App.updateForms();
+          }
+        }
+        Account.remove(data, removeCallback);
+      }
+    }    
   }
 
   /**
@@ -50,8 +78,16 @@ class TransactionsPage {
    * По удалению транзакции вызовите метод App.update(),
    * либо обновляйте текущую страницу (метод update) и виджет со счетами
    * */
-  removeTransaction( id ) {
-
+  removeTransaction(id) {
+    let ask = confirm("Вы действительно хотите удалить эту транзакцию?");
+      if (ask) {
+        function removeCallback (err, response) {
+          if (response && response.success === true) {
+            App.update();
+          }
+        }
+      Transaction.remove(id, removeCallback);
+    }
   }
 
   /**
@@ -61,7 +97,25 @@ class TransactionsPage {
    * в TransactionsPage.renderTransactions()
    * */
   render(options){
+    if (options != undefined) {
+      this.lastOptions = options;
+      function rendCallback (err, response) {
+        if (response && response.success === true) {
+          console.log(response);
+          this.renderTitle(response.data.name);
+        }
+      }
 
+      function tranCallback (err, response) {
+        if (response && response.success === true) {
+          console.log(response);
+          this.renderTransactions(response.data)
+        }
+      }
+
+      Account.get(options, rendCallback.bind(this));
+      Transaction.list(options, tranCallback.bind(this));    
+    }
   }
 
   /**
@@ -70,14 +124,18 @@ class TransactionsPage {
    * Устанавливает заголовок: «Название счёта»
    * */
   clear() {
-
+    let data = [];
+    this.renderTransactions(data);
+    this.renderTitle("Название счёта");
+    this.lastOptions = "";
   }
 
   /**
    * Устанавливает заголовок в элемент .content-title
    * */
   renderTitle(name){
-
+    const titleSpace = document.querySelector(".content-title");
+    titleSpace.innerText = name;
   }
 
   /**
@@ -85,7 +143,12 @@ class TransactionsPage {
    * в формат «10 марта 2019 г. в 03:20»
    * */
   formatDate(date){
-
+    const newString = date.replace(/ /g, "T");
+    const trueDate = new Date(Date.parse(newString));
+    const dayMonthYear = trueDate.toLocaleString("ru", {month: "long", day: "numeric", year: "numeric"});
+    const hourMin = trueDate.toLocaleString("ru", {hour: "2-digit", minute: "2-digit"});
+    const displayDate = dayMonthYear + " в " + hourMin;
+    return displayDate;
   }
 
   /**
@@ -93,7 +156,35 @@ class TransactionsPage {
    * item - объект с информацией о транзакции
    * */
   getTransactionHTML(item){
-
+    const date = this.displayDate(item.created_at);
+    if (item.type = "income") {
+      const typeString = "transaction_income";
+    } else if (item.type = "expense") {
+      const typeString = "transaction_expense";
+    }
+    const output = `
+    <div class="transaction `+typeString+` row">
+      <div class="col-md-7 transaction__details">
+        <div class="transaction__icon">
+          <span class="fa fa-money fa-2x"></span>
+        </div>
+        <div class="transaction__info">
+          <h4 class="transaction__title">`+item.name+`</h4>
+          <div class="transaction__date">`+date+`</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="transaction__summ">`+
+          item.sum+`<span class="currency">₽</span>
+        </div>
+      </div>
+      <div class="col-md-2 transaction__controls">
+        <button class="btn btn-danger transaction__remove" data-id="`+item.id+`">
+          <i class="fa fa-trash"></i>  
+        </button>
+      </div>
+    </div>`
+    return output;
   }
 
   /**
@@ -101,6 +192,10 @@ class TransactionsPage {
    * используя getTransactionHTML
    * */
   renderTransactions(data){
-
+    const tranPanel = document.querySelector(".content");
+    data.forEach(entry => {
+      const output = this.getTransactionHTML(entry)
+      tranPanel.insertAdjacentHTML("beforeend", output);
+    });    
   }
 }

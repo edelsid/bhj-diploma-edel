@@ -17,7 +17,7 @@ class AsyncForm {
       throw new Error ("В конструктор передан пустой элемент");
     }
     this.element = element;
-    this.registerEvents(this.element);
+    this.registerEvents();
   }
 
   /**

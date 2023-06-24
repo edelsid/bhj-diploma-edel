@@ -13,9 +13,12 @@ class Entity {
     createRequest({
       url: this.URL,
       method: 'GET',
+      responseType: 'json',
       data,
       callback: (err, response) => {
-        console.log("11")
+        if (response && response.success === true) {
+          callback(err, response);
+        }
       }
     })
   }
@@ -29,12 +32,15 @@ class Entity {
     createRequest({
       url: this.URL,
       method: 'PUT',
+      responseType: 'json',
       data,
       callback: (err, response) => {
-        console.log("11")
+        console.log(response);
+        if (response && response.success === true) {
+          callback(err, response);
+        }
       }
     })
-
   }
 
   /**
@@ -45,9 +51,13 @@ class Entity {
     createRequest({
       url: this.URL,
       method: 'DELETE',
+      responseType: 'json',
       data,
       callback: (err, response) => {
-        console.log("11")
+        console.log(data);
+        if (response && response.success === true) {
+          callback(err, response);
+        }
       }
     })
   }
