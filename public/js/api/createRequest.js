@@ -7,6 +7,10 @@ const createRequest = (options = {}) => {
    xhr.responseType = "json";
 
    if (options.method === "GET") {
+      if (options.data != null) {
+         const urlString = Object.entries(options.data).map(([key, val]) => `${key}=${val}`).join('&');
+         options.url = options.url+"?"+urlString;
+      }      
       try {
          xhr.open(options.method, options.url);
          xhr.send();
@@ -22,11 +26,13 @@ const createRequest = (options = {}) => {
          options.callback(null, xhr.response);
       }      
 
-   } else if (options.method === "POST" || options.method === "PUT" || options.method === "DELETE") {
+   } else {
       formData = new FormData;
-      formData.append("name", options.data.name);
-      formData.append("email", options.data.email);
-      formData.append("password", options.data.password);
+      if(options.data != null) {
+         for (const [key, value] of Object.entries(options.data)) {
+            formData.append(key, value);
+         }
+      }      
 
       try {
          xhr.open(options.method, options.url);

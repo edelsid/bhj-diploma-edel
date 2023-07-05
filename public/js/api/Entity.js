@@ -54,7 +54,7 @@ class Entity {
       responseType: 'json',
       data,
       callback: (err, response) => {
-        console.log(data);
+        console.log(response);
         if (response && response.success === true) {
           callback(err, response);
         }

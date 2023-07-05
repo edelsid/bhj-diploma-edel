@@ -22,7 +22,11 @@ class TransactionsPage {
    * Вызывает метод render для отрисовки страницы
    * */
   update() {
-    this.render();
+    if (this.lastOptions != null) {
+      this.render(this.lastOptions);
+    } else {
+      this.render(); 
+    }       
   }
 
   /**
@@ -33,16 +37,17 @@ class TransactionsPage {
    * */
   registerEvents() {
     const accButton = document.querySelector(".remove-account");
-    const tranButton = document.querySelector(".transaction__remove");
+    const tranButton = Array.from(document.querySelectorAll(".transaction__remove"));
     accButton.addEventListener("click", (event) => {
       event.preventDefault();
       this.removeAccount();
     })
     if (tranButton != null) {
-      tranButton.addEventListener("click", (event) => {
+      tranButton.forEach(element => element.addEventListener("click", (event) => {
         event.preventDefault();
+        let id = {"id": element.dataset.id};
         this.removeTransaction(id);
-      })
+      }))
     }
     
   }
@@ -60,14 +65,15 @@ class TransactionsPage {
     if (this.lastOptions != null) {
       let ask = confirm("Вы действительно хотите удалить счёт?");
       if (ask) {
-        let data;
         function removeCallback (err, response) {
           if (response && response.success === true) {
             App.updateWidgets();
             App.updateForms();
           }
         }
+        const data = {"id": this.lastOptions.account_id};
         Account.remove(data, removeCallback);
+        this.clear();
       }
     }    
   }
@@ -86,7 +92,7 @@ class TransactionsPage {
             App.update();
           }
         }
-      Transaction.remove(id, removeCallback);
+      Transaction.remove(id, removeCallback.bind(this));
     }
   }
 
@@ -156,11 +162,12 @@ class TransactionsPage {
    * item - объект с информацией о транзакции
    * */
   getTransactionHTML(item){
-    const date = this.displayDate(item.created_at);
-    if (item.type = "income") {
-      const typeString = "transaction_income";
-    } else if (item.type = "expense") {
-      const typeString = "transaction_expense";
+    const date = this.formatDate(item.created_at);
+    let typeString;
+    if (item.type === "income") {
+      typeString = "transaction_income";
+    } else if (item.type === "expense") {
+      typeString = "transaction_expense";
     }
     const output = `
     <div class="transaction `+typeString+` row">
@@ -193,9 +200,17 @@ class TransactionsPage {
    * */
   renderTransactions(data){
     const tranPanel = document.querySelector(".content");
+    let allData = "";
     data.forEach(entry => {
-      const output = this.getTransactionHTML(entry)
-      tranPanel.insertAdjacentHTML("beforeend", output);
-    });    
+      const output = this.getTransactionHTML(entry);
+      allData = allData + output;
+    });  
+    tranPanel.innerHTML = allData;
+    const tranButton = Array.from(document.querySelectorAll(".transaction__remove"));
+    tranButton.forEach(element => element.addEventListener("click", (event) => {
+      event.preventDefault();
+      let id = {"id": element.dataset.id};
+      this.removeTransaction(id);
+    }))
   }
 }

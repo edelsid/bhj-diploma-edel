@@ -23,6 +23,7 @@ class CreateTransactionForm extends AsyncForm {
     function renderAccCallback (err, response) {
       if (response && response.success === true) {
         const renderSpace = this.element.querySelector(".accounts-select");
+        renderSpace.innerHTML = "";
         response.data.forEach(element => {
           renderSpace.add(new Option(element.name, element.id))
           });
